@@ -21,7 +21,6 @@ object Server {
       var requestLine: String = null
       while ({ requestLine = inputReader.readLine(); requestLine != null }) {
         outputStream.write("+PONG\r\n".getBytes)
-        outputStream.flush()
       }
     }
     
