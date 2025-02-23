@@ -15,11 +15,11 @@ object Server {
 
     while (true) {
       val clientSocket = serverSocket.accept() // wait for clients
-      val inputReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
+      val inputReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))
       val outputStream = clientSocket.getOutputStream
 
       var requestLine: String = null
-      while ({ requestLine = inputReader.readLine(); requestLine != null }) {
+      while ({ requestLine = inputReader.readLine(); requestLine != null; requestLine != "" }) {
         outputStream.write("+PONG\r\n".getBytes)
       }
     }
