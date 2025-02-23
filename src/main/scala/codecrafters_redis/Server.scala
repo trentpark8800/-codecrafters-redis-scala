@@ -19,7 +19,7 @@ object Server {
       val outputStream = clientSocket.getOutputStream
 
       var requestLine: String = null
-      while ({ requestLine = inputReader.readLine(); requestLine != null; requestLine != "" }) {
+      while ({ requestLine = inputReader.readLine(); requestLine != null; requestLine == "PING" }) {
         outputStream.write("+PONG\r\n".getBytes)
       }
     }
