@@ -21,7 +21,7 @@ object Server {
       var requestLine: String = null
       while ({ requestLine = inputReader.readLine(); requestLine != null }) {
 
-        if requestLine == "PING" {
+        if (requestLine == "PING") {
           outputStream.write("+PONG\r\n".getBytes)
         }
       }
