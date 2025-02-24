@@ -1,31 +1,44 @@
 package codecrafters_redis
 
-import java.net.{InetSocketAddress, ServerSocket}
+import java.net.{InetSocketAddress, ServerSocket, Socket}
 import java.io.{BufferedReader, InputStreamReader, OutputStream}
 
-object Server {
-  def main(args: Array[String]): Unit = {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    println("Logs from your program will appear here!")
-
-    // Uncomment this to pass the first stage
-    
-    val serverSocket = new ServerSocket()
-    serverSocket.bind(new InetSocketAddress("localhost", 6379))
-
-    while (true) {
-      val clientSocket = serverSocket.accept() // wait for clients
-      val inputReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))
+class RequestThread(clientSocket: Socket) extends Thread {
+  override def run(): Unit = {
+    try {
+      val inputReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
       val outputStream = clientSocket.getOutputStream
 
       var requestLine: String = null
       while ({ requestLine = inputReader.readLine(); requestLine != null }) {
+        println(s"Received request: $requestLine")
 
-        if (requestLine == "PING") {
+        if (requestLine.trim.toUpperCase == "PING") {
           outputStream.write("+PONG\r\n".getBytes)
+          outputStream.flush()
         }
       }
+    } catch {
+      case e: Exception => println(s"Error handling client: ${e.getMessage}")
+    } finally {
+      clientSocket.close()
     }
-    
+  }
+}
+
+object Server {
+  def main(args: Array[String]): Unit = {
+    println("Logs from your program will appear here!")
+
+    val serverSocket = new ServerSocket()
+    serverSocket.bind(new InetSocketAddress("localhost", 6379))
+
+    while (true) {
+      val clientSocket = serverSocket.accept() // Accept new client
+      println("New client connected!")
+
+      val requestThread = new RequestThread(clientSocket)
+      requestThread.start() // Start a new thread for this client
+    }
   }
 }
