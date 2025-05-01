@@ -7,19 +7,20 @@ import java.util.concurrent.Executors
 class RequestThread(clientSocket: Socket) extends Thread {
   override def run(): Unit = {
     try {
-      val inputReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
-      val outputStream = clientSocket.getOutputStream
+      while(true) {
+        val inputReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
+        val outputStream = clientSocket.getOutputStream
 
-      val protocol = new Protocol()
-      val command = new Command()
+        val protocol = new Protocol()
+        val command = new Command()
 
-      val input = protocol.read(inputReader)
-      val result = command.execute(input)
-      val output = protocol.write(result)
+        val input = protocol.read(inputReader)
+        val result = command.execute(input)
+        val output = protocol.write(result)
 
-      outputStream.write(output)
-      outputStream.flush()
-
+        outputStream.write(output)
+        outputStream.flush()
+      }
     } catch {
       case e: Exception =>
         println(s"Error handling client: ${e.getMessage}")
