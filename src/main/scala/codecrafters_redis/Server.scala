@@ -9,17 +9,19 @@ class RequestThread(clientSocket: Socket) extends Thread {
       val inputReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
       val outputStream = clientSocket.getOutputStream
 
-      var requestLine: String = null
-      while ({ requestLine = inputReader.readLine(); requestLine != null }) {
-        println(s"Received request: $requestLine")
+      val protocol = new Protocol()
+      val command = new Command()
 
-        if (requestLine.trim.toUpperCase == "PING") {
-          outputStream.write("+PONG\r\n".getBytes)
-          outputStream.flush()
-        }
-      }
+      val input = protocol.read(inputReader)
+      val result = command.execute(input)
+      val output = protocol.write(result)
+
+      outputStream.write(output)
+      outputStream.flush()
+
     } catch {
-      case e: Exception => println(s"Error handling client: ${e.getMessage}")
+      case e: Exception =>
+        println(s"Error handling client: ${e.getMessage}")
     } finally {
       clientSocket.close()
     }
@@ -28,17 +30,18 @@ class RequestThread(clientSocket: Socket) extends Thread {
 
 object Server {
   def main(args: Array[String]): Unit = {
-    println("Logs from your program will appear here!")
+    println("BYO redis server starting on localhost:6379...")
 
     val serverSocket = new ServerSocket()
     serverSocket.bind(new InetSocketAddress("localhost", 6379))
 
-    while (true) {
-      val clientSocket = serverSocket.accept() // Accept new client
-      println("New client connected!")
+    println("BYO redis server successfully started!")
 
-      val requestThread = new RequestThread(clientSocket)
-      requestThread.start() // Start a new thread for this client
+    while (true) {
+      val clientSocket = serverSocket.accept()
+      println("New client connected!")
+      val thread = new RequestThread(clientSocket)
+      thread.start()
     }
   }
 }
