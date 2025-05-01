@@ -2,6 +2,7 @@ package codecrafters_redis
 
 import java.net.{InetSocketAddress, ServerSocket, Socket}
 import java.io.{BufferedReader, InputStreamReader, OutputStream}
+import java.util.concurrent.Executors
 
 class RequestThread(clientSocket: Socket) extends Thread {
   override def run(): Unit = {
@@ -37,11 +38,12 @@ object Server {
 
     println("BYO redis server successfully started!")
 
+    val threadPool = Executors.newFixedThreadPool(8)
+
     while (true) {
       val clientSocket = serverSocket.accept()
       println("New client connected!")
-      val thread = new RequestThread(clientSocket)
-      thread.start()
+      threadPool.execute(new RequestThread(clientSocket))
     }
   }
 }
