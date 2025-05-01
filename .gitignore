@@ -2,6 +2,7 @@ debug/
 target/
 .vscode
 .metals
+project/
 Dockerfile
 .dockerignore
 docker-compose.yml
