@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  redis-scala:
+    build: .
+    volumes:
+      - sbt-cache:/root/.sbt
+      - ivy2-cache:/root/.ivy2
+      - coursier-cache:/root/.cache/coursier
+    working_dir: /app
+    ports:
+      - "6379:6379"
+    stdin_open: true
+    tty: true
+
+volumes:
+  sbt-cache:
+  ivy2-cache:
+  coursier-cache:

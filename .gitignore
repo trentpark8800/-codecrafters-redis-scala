@@ -2,7 +2,22 @@ debug/
 target/
 .vscode
 .metals
-project/
-Dockerfile
-.dockerignore
-docker-compose.yml
+
+# Editor + IDE junk
+.vscode
+.metals
+.bloop
+.idea
+metals.sbt
+
+# SBT build artifacts
+target/
+project/target/
+project/project/
+
+# Docker build cache (optional)
+debug/
+
+# Never ignore these:
+!project/plugins.sbt
+!project/build.properties
