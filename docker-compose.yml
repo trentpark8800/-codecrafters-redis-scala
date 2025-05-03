@@ -4,6 +4,10 @@ services:
   redis-scala:
     build: .
     volumes:
+      - ./build.sbt:/app/build.sbt
+      - ./project:/app/project
+      - ./src:/app/src
+      - ./your_program.sh:/app/your_program.sh
       - sbt-cache:/root/.sbt
       - ivy2-cache:/root/.ivy2
       - coursier-cache:/root/.cache/coursier
