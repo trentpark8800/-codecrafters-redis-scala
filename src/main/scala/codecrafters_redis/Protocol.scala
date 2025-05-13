@@ -36,7 +36,19 @@ class Protocol {
     new String(buffer)
   }
 
-  def write(reply: String): Array[Byte] = {
-    s"$PLUS_BYTE$reply\r\n".getBytes("UTF-8")
+  private def encode(toEncode: String): Array[Byte] ={
+    s"$PLUS_BYTE$toEncode\r\n".getBytes("UTF-8")
+  }
+
+  private def encodeNull(): Array[Byte] = {
+    s"$DOLLAR_BYTE-1\r\n".getBytes("UTF-8")
+  }
+
+  def write(reply: Option[String]): Array[Byte] = {
+
+    reply match {
+      case Some(value) => encode(value)
+      case None => encodeNull()
+    }
   }
 }
