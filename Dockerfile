@@ -17,4 +17,4 @@ RUN apt-get update && apt-get install -y redis-tools
 RUN chmod +x ./your_program.sh
 
 # Use shell form so bash is invoked
-CMD ["bash", "-c", "./your_program.sh"]
+CMD ["bash", "-c", "./your_program.sh --dir /tmp/redis-files --dbfilename dump.rdb"]
