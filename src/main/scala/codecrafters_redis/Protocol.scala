@@ -36,19 +36,39 @@ class Protocol {
     new String(buffer)
   }
 
-  private def encode(toEncode: String): Array[Byte] ={
-    s"$PLUS_BYTE$toEncode\r\n".getBytes("UTF-8")
+  private def encodeSimpleString(toEncode: String): String ={
+    s"$PLUS_BYTE$toEncode\r\n"
   }
 
-  private def encodeNull(): Array[Byte] = {
-    s"$DOLLAR_BYTE-1\r\n".getBytes("UTF-8")
+  private def encodeArray(toEncode: List[RespReply]): String = {
+    val arrayLength = toEncode.length
+    var encodedString = s"$ASTERISK_BYTE$arrayLength\r\n"
+
+    for (item <- toEncode) {
+      val encodedItem = encode(item)
+      encodedString += encodedItem
+    }
+
+    encodedString
   }
 
-  def write(reply: Option[String]): Array[Byte] = {
+  private def encodeNull(): String = {
+    s"$DOLLAR_BYTE-1\r\n"
+  }
+
+  def encode(reply: RespReply): String = {
 
     reply match {
-      case Some(value) => encode(value)
-      case None => encodeNull()
+      case RespSimpleString(value) => encodeSimpleString(value)
+      case RespArray(value) => encodeArray(value)
+      case RespNull => encodeNull()
     }
+
+  }
+
+  def write(reply: RespReply): Array[Byte] = {
+
+    val stringReply = encode(reply)
+    stringReply.getBytes("UTF-8")
   }
 }
