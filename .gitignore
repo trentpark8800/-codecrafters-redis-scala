@@ -7,7 +7,9 @@ target/
 .vscode
 .metals
 .bloop
+.bsp
 .idea
+.devcontainer
 metals.sbt
 
 # SBT build artifacts

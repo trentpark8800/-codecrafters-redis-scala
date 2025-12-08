@@ -13,7 +13,7 @@ COPY your_program.sh .
 EXPOSE 6379
 
 RUN bash
-RUN apt-get update && apt-get install -y redis-tools
+RUN apt-get update && apt-get install -y redis-tools && apt-get install -y bsdmainutils
 RUN chmod +x ./your_program.sh
 
 # Use shell form so bash is invoked
