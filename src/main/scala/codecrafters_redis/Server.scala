@@ -81,6 +81,13 @@ object Server {
         throw new RuntimeException("Bad cli arguments specified")
     }
 
+    if (config.dbFileName != null) {
+      val rdbFileParser = new RdbParser()
+      rdbFileParser.parse(s"${config.dir}/${config.dbFileName}")
+      storage.cache = rdbFileParser.tempCache
+      storage.expiryCache = rdbFileParser.tempExpiryCache
+    }
+
     val threadPool = Executors.newFixedThreadPool(8)
 
     while (true) {

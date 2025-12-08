@@ -9,8 +9,8 @@ trait DataStorage {
 
 object InMemoryDataStorage extends DataStorage {
   
-  val cache = scala.collection.mutable.Map[String, String]()
-  val expiryCache = scala.collection.mutable.Map[String, Long]()
+  var cache = scala.collection.mutable.Map[String, String]()
+  var expiryCache = scala.collection.mutable.Map[String, Long]()
 
   def setValue(key: String, value: String, ttl: Option[Long] = None): Unit = {
 
