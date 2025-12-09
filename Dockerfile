@@ -14,6 +14,7 @@ EXPOSE 6379
 
 RUN bash
 RUN apt-get update && apt-get install -y redis-tools && apt-get install -y bsdmainutils
+RUN curl https://codecrafters.io/install.sh | sh
 RUN chmod +x ./your_program.sh
 
 # Use shell form so bash is invoked
