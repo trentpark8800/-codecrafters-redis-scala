@@ -40,6 +40,11 @@ class Protocol {
     s"$PLUS_BYTE$toEncode\r\n"
   }
 
+  private def encodeBulkString(toEncode: String): String = {
+    val length = toEncode.length()
+    s"$DOLLAR_BYTE$length\r\n$toEncode\r\n"
+  }
+
   private def encodeArray(toEncode: List[RespReply]): String = {
     val arrayLength = toEncode.length
     var encodedString = s"$ASTERISK_BYTE$arrayLength\r\n"
@@ -60,6 +65,7 @@ class Protocol {
 
     reply match {
       case RespSimpleString(value) => encodeSimpleString(value)
+      case RespBulkString(value) => encodeBulkString(value)
       case RespArray(value) => encodeArray(value)
       case RespNull => encodeNull()
     }

@@ -64,6 +64,18 @@ class Command {
     }
   }
 
+  def keysCommand(input: List[String], storage: DataStorage): RespReply = {
+    if (input.length != 1) {
+      throw new RuntimeException(s"KEYS command expects exactly 1 argument but received ${input.length}.")
+    }
+
+    val subCommand = input.head
+
+    subCommand match {
+      case "*" => RespArray(storage.getAllKeys().map(x => RespBulkString(x)).toList)
+    }
+  }
+
   def configCommand(input: List[String], config: Config): RespReply = {
 
     if (input.length != 2) {
@@ -94,6 +106,7 @@ class Command {
       case "ECHO" => echoCommand(commandInput)
       case "SET" => setCommand(commandInput, storage)
       case "GET" => getCommand(commandInput, storage)
+      case "KEYS" => keysCommand(commandInput, storage)
       case "CONFIG" => configCommand(commandInput, config)
       case other  => throw new Exception(s"Command $other not recognised.")
     }

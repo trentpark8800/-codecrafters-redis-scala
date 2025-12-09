@@ -3,6 +3,7 @@ package codecrafters_redis
 trait DataStorage {
   def setValue(key: String, value: String, ttl: Option[Long]): Unit
   def getValue(key: String): Option[String]
+  def getAllKeys(): Iterable[String]
   def deleteValue(key: String): Unit
   def checkExpiry(key: String): Unit
 }
@@ -25,6 +26,10 @@ object InMemoryDataStorage extends DataStorage {
   
     checkExpiry(key)
     cache.get(key)
+  }
+
+  def getAllKeys(): Iterable[String] = {
+    cache.keys
   }
 
   def deleteValue(key: String): Unit = {
