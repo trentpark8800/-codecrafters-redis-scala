@@ -24,7 +24,7 @@ class Command {
       throw new RuntimeException(s"ECHO command expects 1 argument but received ${input.length}.")
     }
 
-    RespSimpleString(input.head)
+    RespBulkString(input.head)
   }
 
   def setCommand(input: List[String], storage: DataStorage): RespReply = {
@@ -59,7 +59,7 @@ class Command {
     val value = storage.getValue(key)
 
     value match {
-      case Some(v) => RespSimpleString(v)
+      case Some(v) => RespBulkString(v)
       case None => RespNull
     }
   }
@@ -88,7 +88,7 @@ class Command {
     subCommand match {
       case "GET" =>
           config.getValue(subarg) match {
-            case Some(value) => RespArray(List(RespSimpleString(subarg), RespSimpleString(value)))
+            case Some(value) => RespArray(List(RespBulkString(subarg), RespBulkString(value)))
             case None => RespNull
           }
     }
