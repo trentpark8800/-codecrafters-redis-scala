@@ -78,14 +78,21 @@ object Server {
         println(s"Using dir: ${conf.dir}, dbfilename: ${conf.dbFileName}")
         conf
       case None =>
-        throw new RuntimeException("Bad cli arguments specified")
+        println("No command line arguments specified")
+        null
     }
 
-    if (config.dbFileName != null) {
+    if (config.dbFileName != "") {
       val rdbFileParser = new RdbParser()
-      rdbFileParser.parse(s"${config.dir}/${config.dbFileName}")
-      storage.cache = rdbFileParser.tempCache
-      storage.expiryCache = rdbFileParser.tempExpiryCache
+      try {
+        rdbFileParser.parse(s"${config.dir}/${config.dbFileName}")
+        storage.cache = rdbFileParser.tempCache
+        storage.expiryCache = rdbFileParser.tempExpiryCache
+      }
+      catch {
+        case e: java.io.FileNotFoundException =>
+          println(s"The specified file path ${config.dir}/${config.dbFileName} does not exist. Continuing...")
+      } 
     }
 
     val threadPool = Executors.newFixedThreadPool(8)
