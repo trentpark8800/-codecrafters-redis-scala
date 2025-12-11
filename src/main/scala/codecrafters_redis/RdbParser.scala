@@ -156,13 +156,15 @@ class RdbParser extends Parser {
             for (index <- 0 until hashTableSize) {
 
                 var databaseEntry = fileIter.next()
+                var expireTimeMillis: Long = 0
+                var expireTimeInt: Long = 0
 
                 if (databaseEntry == REDIS_RDB_OPCODE_EXPIRETIME_MS) {
-                    val expireTimeMillis = readEightByteLittleEndian(fileIter)
+                    expireTimeMillis = readEightByteLittleEndian(fileIter)
                     databaseEntry = fileIter.next()
                 }
                 else if (databaseEntry == REDIS_RDB_OPCODE_EXPIRETIME) {
-                    val expireTimeInt = readFourByteLittleEndian(fileIter)
+                    expireTimeInt = readFourByteLittleEndian(fileIter)
                     databaseEntry = fileIter.next()
                 }
 
@@ -173,6 +175,13 @@ class RdbParser extends Parser {
                 }
 
                 tempCache += (key -> value)
+
+                if (expireTimeMillis > 0) {
+                    tempExpiryCache += (key -> expireTimeMillis)
+                }
+                else if (expireTimeInt > 0) {
+                    tempExpiryCache += (key -> expireTimeInt * 1000)
+                }
                 
             }
         }
