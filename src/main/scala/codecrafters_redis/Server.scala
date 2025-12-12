@@ -7,26 +7,31 @@ import java.io.{BufferedReader, InputStreamReader, OutputStream, File}
 import java.util.concurrent.Executors
 import javax.xml.crypto.Data
 
- case class Config(
-  dir: String = "",
-  dbFileName: String = ""
+case class Config(
+    dir: String = "",
+    dbFileName: String = "",
+    portNumber: String = ""
 ) {
 
   def getValue(key: String): Option[String] = {
     key match {
-      case "dir" => Some(this.dir)
+      case "dir"        => Some(this.dir)
       case "dbfilename" => Some(this.dbFileName)
-      case other => None
+      case "port"       => Some(this.portNumber)
+      case other        => None
     }
   }
 
 }
 
-class RequestThread(clientSocket: Socket, storage: DataStorage, config: Config) extends Thread {
+class RequestThread(clientSocket: Socket, storage: DataStorage, config: Config)
+    extends Thread {
   override def run(): Unit = {
     try {
-      while(true) {
-        val inputReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
+      while (true) {
+        val inputReader = new BufferedReader(
+          new InputStreamReader(clientSocket.getInputStream)
+        )
         val outputStream = clientSocket.getOutputStream
 
         val protocol = new Protocol()
@@ -71,6 +76,10 @@ object Server {
       opt[String]("dbfilename")
         .action((x, c) => c.copy(dbFileName = x))
         .text("dbfilename is the name of the stored dbfile")
+
+      opt[String]("port")
+        .action((x, c) => c.copy(portNumber = x))
+        .text("Specify a custom port number, default is 6379")
     }
 
     val config = cliParser.parse(args, Config()) match {
@@ -88,11 +97,12 @@ object Server {
         rdbFileParser.parse(s"${config.dir}/${config.dbFileName}")
         storage.cache = rdbFileParser.tempCache
         storage.expiryCache = rdbFileParser.tempExpiryCache
-      }
-      catch {
+      } catch {
         case e: java.io.FileNotFoundException =>
-          println(s"The specified file path ${config.dir}/${config.dbFileName} does not exist. Continuing...")
-      } 
+          println(
+            s"The specified file path ${config.dir}/${config.dbFileName} does not exist. Continuing..."
+          )
+      }
     }
 
     val threadPool = Executors.newFixedThreadPool(8)
