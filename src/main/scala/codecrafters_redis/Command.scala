@@ -101,16 +101,15 @@ class Command {
 
   def infoCommand(input: List[String], config: Config): RespReply = {
 
-    if (input.length != 2) {
-      throw new RuntimeException(s"INFO command requires a sub-command and argument.")
+    if (input.length != 1) {
+      RespBulkString("default info reply")
     }
 
     val subCommand = input.head.toUpperCase()
-    val subarg = input(1).toLowerCase()
 
     subCommand match {
-      case "replication" =>
-        RespBulkString("master")
+      case "REPLICATION" =>
+        RespBulkString("role:master")
     }
   }
 
