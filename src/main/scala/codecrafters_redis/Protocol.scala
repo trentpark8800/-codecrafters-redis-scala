@@ -20,11 +20,13 @@ class Protocol {
   private def parseMultiBulkReply(reader: BufferedReader): List[String] = {
     val countLine = reader.readLine()
     val count = countLine.toInt
-    (0 until count).map(_ => {
-      val prefix = reader.read().toChar
-      if (prefix != DOLLAR_BYTE) throw new Exception(s"Expected $DOLLAR_BYTE, found $prefix")
-      parseBulkReply(reader)
-    }).toList
+    (0 until count)
+      .map(_ => {
+        val prefix = reader.read().toChar
+        if (prefix != DOLLAR_BYTE) throw new Exception(s"Expected $DOLLAR_BYTE, found $prefix")
+        parseBulkReply(reader)
+      })
+      .toList
   }
 
   private def parseBulkReply(reader: BufferedReader): String = {
@@ -36,7 +38,7 @@ class Protocol {
     new String(buffer)
   }
 
-  private def encodeSimpleString(toEncode: String): String ={
+  private def encodeSimpleString(toEncode: String): String = {
     s"$PLUS_BYTE$toEncode\r\n"
   }
 
@@ -65,9 +67,9 @@ class Protocol {
 
     reply match {
       case RespSimpleString(value) => encodeSimpleString(value)
-      case RespBulkString(value) => encodeBulkString(value)
-      case RespArray(value) => encodeArray(value)
-      case RespNull => encodeNull()
+      case RespBulkString(value)   => encodeBulkString(value)
+      case RespArray(value)        => encodeArray(value)
+      case RespNull                => encodeNull()
     }
 
   }

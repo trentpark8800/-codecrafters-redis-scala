@@ -9,7 +9,7 @@ trait DataStorage {
 }
 
 object InMemoryDataStorage extends DataStorage {
-  
+
   var cache = scala.collection.mutable.Map[String, String]()
   var expiryCache = scala.collection.mutable.Map[String, Long]()
 
@@ -23,7 +23,7 @@ object InMemoryDataStorage extends DataStorage {
   }
 
   def getValue(key: String): Option[String] = {
-  
+
     checkExpiry(key)
     cache.get(key)
   }

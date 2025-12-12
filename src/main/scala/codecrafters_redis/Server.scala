@@ -24,8 +24,7 @@ case class Config(
 
 }
 
-class RequestThread(clientSocket: Socket, storage: DataStorage, config: Config)
-    extends Thread {
+class RequestThread(clientSocket: Socket, storage: DataStorage, config: Config) extends Thread {
   override def run(): Unit = {
     try {
       while (true) {
