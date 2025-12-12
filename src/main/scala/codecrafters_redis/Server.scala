@@ -10,7 +10,7 @@ import javax.xml.crypto.Data
 case class Config(
     dir: String = "",
     dbFileName: String = "",
-    portNumber: String = ""
+    portNumber: String = "6379"
 ) {
 
   def getValue(key: String): Option[String] = {
@@ -55,16 +55,6 @@ class RequestThread(clientSocket: Socket, storage: DataStorage, config: Config)
 
 object Server {
   def main(args: Array[String]): Unit = {
-    println("BYO redis server starting on localhost:6379...")
-
-    val serverSocket = new ServerSocket()
-    serverSocket.bind(new InetSocketAddress("localhost", 6379))
-
-    println("BYO redis server successfully started!")
-
-    val storage = InMemoryDataStorage
-
-    println("Storage successfully instantiated.")
 
     val cliParser = new scopt.OptionParser[Config]("scopt") {
       head("scopt", "4.x")
@@ -90,6 +80,17 @@ object Server {
         println("No command line arguments specified")
         null
     }
+
+    println(s"BYO redis server starting on localhost:${config.portNumber}...")
+
+    val serverSocket = new ServerSocket()
+    serverSocket.bind(new InetSocketAddress("localhost", config.portNumber.toInt))
+
+    println("BYO redis server successfully started!")
+
+    val storage = InMemoryDataStorage
+
+    println("Storage successfully instantiated.")
 
     if (config.dbFileName != "") {
       val rdbFileParser = new RdbParser()
