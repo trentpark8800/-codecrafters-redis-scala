@@ -94,6 +94,21 @@ class Command {
     }
   }
 
+  def infoCommand(input: List[String], config: Config): RespReply = {
+
+    if (input.length != 2) {
+      throw new RuntimeException(s"INFO command requires a sub-command and argument.")
+    }
+
+    val subCommand = input.head.toUpperCase()
+    val subarg = input(1).toLowerCase()
+
+    subCommand match {
+      case "replication" =>
+          RespBulkString("master")
+    }
+  }
+
   def execute(input: List[String], storage: DataStorage, config: Config): RespReply = {
     if (input.isEmpty) throw new Exception("No command received")
 
@@ -108,6 +123,7 @@ class Command {
       case "GET" => getCommand(commandInput, storage)
       case "KEYS" => keysCommand(commandInput, storage)
       case "CONFIG" => configCommand(commandInput, config)
+      case "INFO" => infoCommand(commandInput, config)
       case other  => throw new Exception(s"Command $other not recognised.")
     }
   }
