@@ -10,7 +10,8 @@ import javax.xml.crypto.Data
 case class Config(
     dir: String = "",
     dbFileName: String = "",
-    portNumber: String = "6379"
+    portNumber: String = "6379",
+    replicaOf: String = ""
 ) {
 
   def getValue(key: String): Option[String] = {
@@ -18,6 +19,7 @@ case class Config(
       case "dir"        => Some(this.dir)
       case "dbfilename" => Some(this.dbFileName)
       case "port"       => Some(this.portNumber)
+      case "replicaof"  => Some(this.replicaOf)
       case other        => None
     }
   }
@@ -59,21 +61,30 @@ object Server {
       head("scopt", "4.x")
 
       opt[String]("dir")
+        .optional()
         .action((x, c) => c.copy(dir = x))
         .text("dir is the dbfile directory name")
 
       opt[String]("dbfilename")
+        .optional()
         .action((x, c) => c.copy(dbFileName = x))
         .text("dbfilename is the name of the stored dbfile")
 
       opt[String]("port")
+        .optional()
         .action((x, c) => c.copy(portNumber = x))
         .text("Specify a custom port number, default is 6379")
+      
+      opt[String]("replicaof")
+        .optional()
+        .action((x, c) => c.copy(replicaOf = x))
+        .validate(x => if (x.split(" ").length == 2) success else failure("Should follow the '<MASTER_HOST> <MASTER_PORT>' pattern"))
+        .text("Specify whether the instance is a replica, pattern is '<MASTER_HOST> <MASTER_PORT>'")
     }
 
     val config = cliParser.parse(args, Config()) match {
       case Some(conf) =>
-        println(s"Using dir: ${conf.dir}, dbfilename: ${conf.dbFileName}")
+        println(s"Using dir: ${conf.dir}, dbfilename: ${conf.dbFileName}, port: ${conf.portNumber}")
         conf
       case None =>
         println("No command line arguments specified")
