@@ -107,8 +107,14 @@ class Command {
 
     val subCommand = input.head.toUpperCase()
 
+    val masterString = s"""
+    role:master
+    master_replid:${Server.getReplID()}
+    master_repl_offset:${Server.getReplOffset()}
+    """
+
     subCommand match {
-      case "REPLICATION" => if (config.replicaOf.isEmpty()) RespBulkString("role:master") else RespBulkString("role:slave")
+      case "REPLICATION" => if (config.replicaOf.isEmpty()) RespBulkString(masterString) else RespBulkString("role:slave")
     }
   }
 

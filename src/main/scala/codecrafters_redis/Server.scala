@@ -1,6 +1,7 @@
 package codecrafters_redis
 
 import scopt.OParser
+import scala.util.Random
 
 import java.net.{InetSocketAddress, ServerSocket, Socket}
 import java.io.{BufferedReader, InputStreamReader, OutputStream, File}
@@ -55,6 +56,25 @@ class RequestThread(clientSocket: Socket, storage: DataStorage, config: Config) 
 }
 
 object Server {
+
+  private val replID: String = setReplID()
+  private var replOffset: Int = 0
+
+  def setReplID(): String = {
+    val arr = new Array[Byte](20)
+    Random.nextBytes(arr)
+
+    arr.iterator.map(x => String.format("%02x", Byte.box(x))).mkString("")
+  }
+
+  def getReplID(): String = {
+    this.replID
+  }
+
+  def getReplOffset(): Int = {
+    this.replOffset
+  }
+
   def main(args: Array[String]): Unit = {
 
     val cliParser = new scopt.OptionParser[Config]("scopt") {
@@ -74,11 +94,14 @@ object Server {
         .optional()
         .action((x, c) => c.copy(portNumber = x))
         .text("Specify a custom port number, default is 6379")
-      
+
       opt[String]("replicaof")
         .optional()
         .action((x, c) => c.copy(replicaOf = x))
-        .validate(x => if (x.split(" ").length == 2) success else failure("Should follow the '<MASTER_HOST> <MASTER_PORT>' pattern"))
+        .validate(x =>
+          if (x.split(" ").length == 2) success
+          else failure("Should follow the '<MASTER_HOST> <MASTER_PORT>' pattern")
+        )
         .text("Specify whether the instance is a replica, pattern is '<MASTER_HOST> <MASTER_PORT>'")
     }
 
