@@ -75,6 +75,25 @@ object Server {
     this.replOffset
   }
 
+  def handshakeWithMaster(replicaConfig: String): Unit = {
+
+    val masterHost = replicaConfig.split(" ")(0)
+    val masterPort = replicaConfig.split(" ")(1).toInt
+
+    println(s"Handshaking with master at host: $masterHost and port: $masterPort")
+    val masterSocket = new Socket(masterHost, masterPort)
+    val masterOutputStream = masterSocket.getOutputStream
+
+    val protocol = new Protocol()
+
+    val outputPing = protocol.write(RespArray(List(RespSimpleString("PING"))))
+
+    masterOutputStream.write(outputPing)
+    masterOutputStream.flush()
+
+    println(s"Handshake successful!")
+  }
+
   def main(args: Array[String]): Unit = {
 
     val cliParser = new scopt.OptionParser[Config]("scopt") {
@@ -137,6 +156,10 @@ object Server {
             s"The specified file path ${config.dir}/${config.dbFileName} does not exist. Continuing..."
           )
       }
+    }
+
+    if (config.replicaOf != "") {
+      handshakeWithMaster(config.replicaOf)
     }
 
     val threadPool = Executors.newFixedThreadPool(8)
