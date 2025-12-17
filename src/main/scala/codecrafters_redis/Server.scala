@@ -86,7 +86,7 @@ object Server {
 
     val protocol = new Protocol()
 
-    val outputPing = protocol.write(RespArray(List(RespSimpleString("PING"))))
+    val outputPing = protocol.write(RespArray(List(RespBulkString("PING"))))
 
     masterOutputStream.write(outputPing)
     masterOutputStream.flush()
