@@ -91,6 +91,32 @@ object Server {
     masterOutputStream.write(outputPing)
     masterOutputStream.flush()
 
+    var replConf = protocol.write(
+      RespArray(
+        List(
+          RespBulkString("REPLCONF"),
+          RespBulkString("listening-port"),
+          RespBulkString("8080")
+        )
+      )
+    )
+
+    masterOutputStream.write(replConf)
+    masterOutputStream.flush()
+
+    replConf = protocol.write(
+      RespArray(
+        List(
+          RespBulkString("REPLCONF"),
+          RespBulkString("capa"),
+          RespBulkString("psync2")
+        )
+      )
+    )
+
+    masterOutputStream.write(replConf)
+    masterOutputStream.flush()
+
     println(s"Handshake successful!")
   }
 

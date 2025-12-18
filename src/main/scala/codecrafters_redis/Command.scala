@@ -114,8 +114,14 @@ class Command {
     """
 
     subCommand match {
-      case "REPLICATION" => if (config.replicaOf.isEmpty()) RespBulkString(masterString) else RespBulkString("role:slave")
+      case "REPLICATION" =>
+        if (config.replicaOf.isEmpty()) RespBulkString(masterString)
+        else RespBulkString("role:slave")
     }
+  }
+
+  def replConfCommand(input: List[String], config: Config): RespReply = {
+    RespSimpleString("OK")
   }
 
   def execute(input: List[String], storage: DataStorage, config: Config): RespReply = {
@@ -126,15 +132,16 @@ class Command {
     val commandInput = input.slice(1, input.length)
 
     command match {
-      case "COMMAND" => commandCommand()
-      case "PING"    => pingCommand()
-      case "ECHO"    => echoCommand(commandInput)
-      case "SET"     => setCommand(commandInput, storage)
-      case "GET"     => getCommand(commandInput, storage)
-      case "KEYS"    => keysCommand(commandInput, storage)
-      case "CONFIG"  => configCommand(commandInput, config)
-      case "INFO"    => infoCommand(commandInput, config)
-      case other     => throw new Exception(s"Command $other not recognised.")
+      case "COMMAND"  => commandCommand()
+      case "PING"     => pingCommand()
+      case "ECHO"     => echoCommand(commandInput)
+      case "SET"      => setCommand(commandInput, storage)
+      case "GET"      => getCommand(commandInput, storage)
+      case "KEYS"     => keysCommand(commandInput, storage)
+      case "CONFIG"   => configCommand(commandInput, config)
+      case "INFO"     => infoCommand(commandInput, config)
+      case "REPLCONF" => replConfCommand(commandInput, config)
+      case other      => throw new Exception(s"Command $other not recognised.")
     }
   }
 }
