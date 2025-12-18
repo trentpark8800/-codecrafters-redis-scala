@@ -93,7 +93,7 @@ object Server {
     masterOutputStream.flush()
 
     val pingResponse = protocol.read(masterInputReader)
-    if (pingResponse(0) == "PONG") {
+    if (pingResponse != "") {
 
       var replConf = protocol.write(
         RespArray(
