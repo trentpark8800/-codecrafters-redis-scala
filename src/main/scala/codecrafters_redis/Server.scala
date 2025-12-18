@@ -83,6 +83,7 @@ object Server {
     println(s"Handshaking with master at host: $masterHost and port: $masterPort")
     val masterSocket = new Socket(masterHost, masterPort)
     val masterOutputStream = masterSocket.getOutputStream
+    val masterInputReader = new BufferedReader(new InputStreamReader(masterSocket.getInputStream))
 
     val protocol = new Protocol()
 
@@ -91,32 +92,35 @@ object Server {
     masterOutputStream.write(outputPing)
     masterOutputStream.flush()
 
-    var replConf = protocol.write(
-      RespArray(
-        List(
-          RespBulkString("REPLCONF"),
-          RespBulkString("listening-port"),
-          RespBulkString("8080")
+    val pingResponse = protocol.read(masterInputReader)
+    if (pingResponse(0) == "PONG") {
+
+      var replConf = protocol.write(
+        RespArray(
+          List(
+            RespBulkString("REPLCONF"),
+            RespBulkString("listening-port"),
+            RespBulkString("8080")
+          )
         )
       )
-    )
 
-    masterOutputStream.write(replConf)
-    masterOutputStream.flush()
+      masterOutputStream.write(replConf)
+      masterOutputStream.flush()
 
-    replConf = protocol.write(
-      RespArray(
-        List(
-          RespBulkString("REPLCONF"),
-          RespBulkString("capa"),
-          RespBulkString("psync2")
+      replConf = protocol.write(
+        RespArray(
+          List(
+            RespBulkString("REPLCONF"),
+            RespBulkString("capa"),
+            RespBulkString("psync2")
+          )
         )
       )
-    )
 
-    masterOutputStream.write(replConf)
-    masterOutputStream.flush()
-
+      masterOutputStream.write(replConf)
+      masterOutputStream.flush()
+    }
     println(s"Handshake successful!")
   }
 
