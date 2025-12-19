@@ -75,10 +75,10 @@ object Server {
     this.replOffset
   }
 
-  def handshakeWithMaster(replicaConfig: String): Unit = {
+  def handshakeWithMaster(config: Config): Unit = {
 
-    val masterHost = replicaConfig.split(" ")(0)
-    val masterPort = replicaConfig.split(" ")(1).toInt
+    val masterHost = config.replicaOf.split(" ")(0)
+    val masterPort = config.replicaOf.split(" ")(1).toInt
 
     println(s"Handshaking with master at host: $masterHost and port: $masterPort")
     val masterSocket = new Socket(masterHost, masterPort)
@@ -93,14 +93,14 @@ object Server {
     masterOutputStream.flush()
 
     val pingResponse = protocol.read(masterInputReader)
-    if (pingResponse != "") {
+    if (pingResponse == "PONG") {
 
       var replConf = protocol.write(
         RespArray(
           List(
             RespBulkString("REPLCONF"),
             RespBulkString("listening-port"),
-            RespBulkString("8080")
+            RespBulkString(config.portNumber)
           )
         )
       )
@@ -120,6 +120,9 @@ object Server {
 
       masterOutputStream.write(replConf)
       masterOutputStream.flush()
+    }
+    else {
+      throw new RuntimeException("Handshake with master failed!")
     }
     println(s"Handshake successful!")
   }
@@ -189,7 +192,7 @@ object Server {
     }
 
     if (config.replicaOf != "") {
-      handshakeWithMaster(config.replicaOf)
+      handshakeWithMaster(config)
     }
 
     val threadPool = Executors.newFixedThreadPool(8)

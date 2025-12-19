@@ -13,6 +13,7 @@ class Protocol {
     firstChar match {
       case `ASTERISK_BYTE` => parseMultiBulkReply(reader)
       case `DOLLAR_BYTE`   => List(parseBulkReply(reader))
+      case `PLUS_BYTE`     => List(parseSimpleString(reader))
       case _               => throw new Exception(s"Unknown input: $firstChar")
     }
   }
@@ -36,6 +37,10 @@ class Protocol {
     reader.read(buffer, 0, len)
     reader.readLine() // Read \r\n
     new String(buffer)
+  }
+
+  private def parseSimpleString(reader: BufferedReader): String = {
+    reader.readLine()
   }
 
   private def encodeSimpleString(toEncode: String): String = {
