@@ -124,6 +124,10 @@ class Command {
     RespSimpleString("OK")
   }
 
+  def psyncCommand(input: List[String], config: Config): RespReply = {
+    RespSimpleString(s"FULLRESYNC ${Server.getReplID()} 0")
+  }
+
   def execute(input: List[String], storage: DataStorage, config: Config): RespReply = {
     if (input.isEmpty) throw new Exception("No command received")
 
@@ -141,6 +145,7 @@ class Command {
       case "CONFIG"   => configCommand(commandInput, config)
       case "INFO"     => infoCommand(commandInput, config)
       case "REPLCONF" => replConfCommand(commandInput, config)
+      case "PSYNC"    => psyncCommand(commandInput, config)
       case other      => throw new Exception(s"Command $other not recognised.")
     }
   }
