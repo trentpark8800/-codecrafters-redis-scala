@@ -121,18 +121,23 @@ object Server {
       masterOutputStream.write(replConf)
       masterOutputStream.flush()
 
-      val psyncArr = protocol.write(
-        RespArray(
-          List(
-            RespBulkString("PSYNC"),
-            RespBulkString("?"),
-            RespBulkString("-1")
+      val replConfResponse = protocol.read(masterInputReader)
+
+      if (replConfResponse(0) != "") {
+
+        val psyncArr = protocol.write(
+          RespArray(
+            List(
+              RespBulkString("PSYNC"),
+              RespBulkString("?"),
+              RespBulkString("-1")
+            )
           )
         )
-      )
 
-      masterOutputStream.write(psyncArr)
-      masterOutputStream.flush()
+        masterOutputStream.write(psyncArr)
+        masterOutputStream.flush()
+      }
 
     } else {
       throw new RuntimeException("Handshake with master failed!")
