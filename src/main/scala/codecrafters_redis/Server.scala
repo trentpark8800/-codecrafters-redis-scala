@@ -6,6 +6,7 @@ import scala.util.Random
 import java.net.{InetSocketAddress, ServerSocket, Socket}
 import java.io.{BufferedReader, InputStreamReader, OutputStream, File}
 import java.util.concurrent.Executors
+import java.util.Base64
 import javax.xml.crypto.Data
 
 case class Config(
@@ -45,6 +46,10 @@ class RequestThread(clientSocket: Socket, storage: DataStorage, config: Config) 
 
         outputStream.write(output)
         outputStream.flush()
+
+        if (input(0).toUpperCase() == "PSYNC") {
+          Server.sendSnaphot(protocol, outputStream)
+        }
       }
     } catch {
       case e: Exception =>
@@ -143,6 +148,20 @@ object Server {
       throw new RuntimeException("Handshake with master failed!")
     }
     println(s"Handshake successful!")
+  }
+
+  def sendSnaphot(protocol: Protocol, outputStream: OutputStream): Unit = {
+
+    val b64EncodedCacheSnapshot =
+      "UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog=="
+
+    val cacheSnapshot = RespSnapshot(Base64.getDecoder().decode(b64EncodedCacheSnapshot))
+
+    val encodedCacheSnapshot = protocol.write(cacheSnapshot)
+
+    outputStream.write(encodedCacheSnapshot)
+    outputStream.flush()
+
   }
 
   def main(args: Array[String]): Unit = {

@@ -7,6 +7,7 @@ case class RespError(message: String) extends RespReply
 case class RespInteger(value: Integer) extends RespReply
 case class RespBulkString(value: String) extends RespReply
 case class RespArray(value: List[RespReply]) extends RespReply
+case class RespSnapshot(value: Array[Byte]) extends RespReply
 case object RespNull extends RespReply
 
 class Command {

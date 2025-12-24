@@ -64,6 +64,12 @@ class Protocol {
     encodedString
   }
 
+  private def encodeSnapshot(toEncode: Array[Byte]): String = {
+    val snapshotLength = toEncode.length
+
+    s"$PLUS_BYTE$snapshotLength\r\n$toEncode"
+  }
+
   private def encodeNull(): String = {
     s"$DOLLAR_BYTE-1\r\n"
   }
@@ -74,6 +80,7 @@ class Protocol {
       case RespSimpleString(value) => encodeSimpleString(value)
       case RespBulkString(value)   => encodeBulkString(value)
       case RespArray(value)        => encodeArray(value)
+      case RespSnapshot(value)     => encodeSnapshot(value)
       case RespNull                => encodeNull()
     }
 
