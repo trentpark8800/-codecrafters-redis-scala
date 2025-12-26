@@ -48,7 +48,7 @@ class RequestThread(clientSocket: Socket, storage: DataStorage, config: Config) 
         outputStream.flush()
 
         if (input(0).toUpperCase() == "PSYNC") {
-          Server.sendSnaphot(protocol, outputStream)
+          Server.sendSnapshot(protocol, outputStream)
         }
       }
     } catch {
@@ -150,16 +150,17 @@ object Server {
     println(s"Handshake successful!")
   }
 
-  def sendSnaphot(protocol: Protocol, outputStream: OutputStream): Unit = {
+  def sendSnapshot(protocol: Protocol, outputStream: OutputStream): Unit = {
 
     val b64EncodedCacheSnapshot =
       "UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog=="
 
     val cacheSnapshot = RespSnapshot(Base64.getDecoder().decode(b64EncodedCacheSnapshot))
 
-    val encodedCacheSnapshot = protocol.write(cacheSnapshot)
+    val encodedSnapshotLength = protocol.write(cacheSnapshot)
 
-    outputStream.write(encodedCacheSnapshot)
+    outputStream.write(encodedSnapshotLength)
+    outputStream.write(cacheSnapshot.value)
     outputStream.flush()
 
   }

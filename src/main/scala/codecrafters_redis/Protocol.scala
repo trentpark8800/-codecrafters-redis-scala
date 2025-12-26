@@ -64,13 +64,8 @@ class Protocol {
     encodedString
   }
 
-  private def encodeSnapshot(toEncode: Array[Byte]): String = {
-
-    val binaryString = toEncode.iterator.map(x => String.format("%02x", Byte.box(x))).mkString(" ")
-    
-    val snapshotLength = binaryString.length / 2
-
-    s"$DOLLAR_BYTE$snapshotLength\r\n$binaryString"
+  private def encodeSnapshotLength(toEncode: Array[Byte]): String = {
+    s"$DOLLAR_BYTE${toEncode.length}\r\n"
   }
 
   private def encodeNull(): String = {
@@ -83,7 +78,7 @@ class Protocol {
       case RespSimpleString(value) => encodeSimpleString(value)
       case RespBulkString(value)   => encodeBulkString(value)
       case RespArray(value)        => encodeArray(value)
-      case RespSnapshot(value)     => encodeSnapshot(value)
+      case RespSnapshot(value)     => encodeSnapshotLength(value)
       case RespNull                => encodeNull()
     }
 
