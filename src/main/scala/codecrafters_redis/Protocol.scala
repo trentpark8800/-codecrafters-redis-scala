@@ -66,7 +66,7 @@ class Protocol {
 
   private def encodeSnapshot(toEncode: Array[Byte]): String = {
 
-    val binaryString = toEncode.iterator.map(x => String.format("%02x", Byte.box(x))).mkString("")
+    val binaryString = toEncode.iterator.map(x => String.format("%02x", Byte.box(x))).mkString(" ")
     
     val snapshotLength = binaryString.length / 2
 
