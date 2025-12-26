@@ -70,7 +70,7 @@ class Protocol {
     
     val snapshotLength = binaryString.length / 8
 
-    s"$DOLLAR_BYTE$snapshotLength\r\n$toEncode"
+    s"$DOLLAR_BYTE$snapshotLength\r\n$binaryString"
   }
 
   private def encodeNull(): String = {
