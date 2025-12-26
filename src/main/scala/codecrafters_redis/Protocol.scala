@@ -67,7 +67,7 @@ class Protocol {
   private def encodeSnapshot(toEncode: Array[Byte]): String = {
     val snapshotLength = toEncode.length
 
-    s"$PLUS_BYTE$snapshotLength\r\n$toEncode"
+    s"$DOLLAR_BYTE$snapshotLength\r\n$toEncode"
   }
 
   private def encodeNull(): String = {
