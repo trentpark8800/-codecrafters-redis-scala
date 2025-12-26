@@ -65,7 +65,10 @@ class Protocol {
   }
 
   private def encodeSnapshot(toEncode: Array[Byte]): String = {
-    val snapshotLength = toEncode.length
+
+    val binaryString = toEncode.iterator.map(x => x.toBinaryString).mkString("")
+    
+    val snapshotLength = binaryString.length / 8
 
     s"$DOLLAR_BYTE$snapshotLength\r\n$toEncode"
   }
