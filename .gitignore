@@ -2,6 +2,9 @@ debug/
 target/
 .vscode
 .metals
+scratchpad.md
+*.rdb
+*.txt
 
 # Editor + IDE junk
 .vscode
