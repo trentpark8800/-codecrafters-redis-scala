@@ -1,5 +1,7 @@
 package codecrafters_redis
 
+import java.net.Socket
+
 trait RespReply
 
 case class RespSimpleString(value: String) extends RespReply
@@ -121,15 +123,17 @@ class Command {
     }
   }
 
-  def replConfCommand(input: List[String], config: Config): RespReply = {
+  def replConfCommand(input: List[String], config: Config, clientSocket: Socket): RespReply = {
+    Server.configureClusterManager(clientSocket)
+    
     RespSimpleString("OK")
   }
 
-  def psyncCommand(input: List[String], config: Config): RespReply = {
+  def psyncCommand(input: List[String], config: Config, protocol: Protocol): RespReply = {
     RespSimpleString(s"FULLRESYNC ${Server.getReplID()} 0")
   }
 
-  def execute(input: List[String], storage: DataStorage, config: Config): RespReply = {
+  def execute(input: List[String], storage: DataStorage, config: Config, protocol: Protocol, clientSocket: Socket): RespReply = {
     if (input.isEmpty) throw new Exception("No command received")
 
     val command =
@@ -145,8 +149,8 @@ class Command {
       case "KEYS"     => keysCommand(commandInput, storage)
       case "CONFIG"   => configCommand(commandInput, config)
       case "INFO"     => infoCommand(commandInput, config)
-      case "REPLCONF" => replConfCommand(commandInput, config)
-      case "PSYNC"    => psyncCommand(commandInput, config)
+      case "REPLCONF" => replConfCommand(commandInput, config, clientSocket)
+      case "PSYNC"    => psyncCommand(commandInput, config, protocol)
       case other      => throw new Exception(s"Command $other not recognised.")
     }
   }

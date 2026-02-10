@@ -8,12 +8,13 @@ import java.io.{BufferedReader, InputStreamReader, OutputStream, File}
 import java.util.concurrent.Executors
 import java.util.Base64
 import javax.xml.crypto.Data
+import codecrafters_redis.ClusterNode.managerPort
 
 case class Config(
     dir: String = "",
     dbFileName: String = "",
     portNumber: String = "6379",
-    replicaOf: String = ""
+    var replicaOf: String = ""
 ) {
 
   def getValue(key: String): Option[String] = {
@@ -29,26 +30,47 @@ case class Config(
 }
 
 class RequestThread(clientSocket: Socket, storage: DataStorage, config: Config) extends Thread {
+
+  def execute(input: List[String], command: Command, storage: DataStorage, config: Config, protocol: Protocol, clientSocket: Socket): Option[RespReply] = {
+    val writeCommands = List[String]("SET", "DEL")
+
+    if (Server.getRole() == "manager" & writeCommands.contains(input(0).toUpperCase())) {
+      ClusterManager.routeCommandToNode(input, protocol)
+      None
+    }
+    else {
+      Some(command.execute(input, storage, config, protocol, clientSocket))
+    }
+  }
+
+  def writeToStream(input: RespReply, protocol: Protocol, outputStream: OutputStream): Unit = {
+    val output = protocol.write(input)
+    outputStream.write(output)
+    outputStream.flush()
+  }
+
   override def run(): Unit = {
     try {
-      while (true) {
-        val inputReader = new BufferedReader(
-          new InputStreamReader(clientSocket.getInputStream)
-        )
-        val outputStream = clientSocket.getOutputStream
+      val inputReader = new BufferedReader(
+        new InputStreamReader(clientSocket.getInputStream)
+      )
+      val outputStream = clientSocket.getOutputStream
 
-        val protocol = new Protocol()
-        val command = new Command()
+      val protocol = new Protocol()
+      val command = new Command()
+
+      while (true) {
 
         val input = protocol.read(inputReader)
-        val result = command.execute(input, storage, config)
-        val output = protocol.write(result)
-
-        outputStream.write(output)
-        outputStream.flush()
+        val result = execute(input, command, storage, config, protocol, clientSocket)
+        // val result = command.execute(input, storage, config, protocol, clientSocket)
+        result match {
+          case Some(value) => writeToStream(value, protocol, outputStream)
+          case None => println("Forwarded command to node(s)")
+        }
 
         if (input(0).toUpperCase() == "PSYNC") {
-          Server.sendSnapshot(protocol, outputStream)
+          ClusterManager.sendSnapshot(protocol)
         }
       }
     } catch {
@@ -64,6 +86,7 @@ object Server {
 
   private val replID: String = setReplID()
   private var replOffset: Int = 0
+  private var role: String = "standalone"
 
   def setReplID(): String = {
     val arr = new Array[Byte](20)
@@ -80,89 +103,42 @@ object Server {
     this.replOffset
   }
 
-  def handshakeWithMaster(config: Config): Unit = {
+  def setRole(role: String): Unit = {
+    this.role = role
+  }
 
-    val masterHost = config.replicaOf.split(" ")(0)
-    val masterPort = config.replicaOf.split(" ")(1).toInt
+  def getRole(): String ={
+    this.role
+  }
 
-    println(s"Handshaking with master at host: $masterHost and port: $masterPort")
-    val masterSocket = new Socket(masterHost, masterPort)
-    val masterOutputStream = masterSocket.getOutputStream
-    val masterInputReader = new BufferedReader(new InputStreamReader(masterSocket.getInputStream))
+  def configureClusterManager(nodeSocket: Socket): Unit = {
+    ClusterManager.setNodeSocket(nodeSocket)
+    ClusterManager.setNodePort()
+    ClusterManager.setNodeHost()
+    ClusterManager.setNodeInputStream()
+    ClusterManager.setNodeOutputStream()
+    setRole("manager")
+  }
+
+  def configureClusterNode(config: Config): Socket = {
+    val managerHost = config.replicaOf.split(" ")(0)
+    val managerPort = config.replicaOf.split(" ")(1).toInt
 
     val protocol = new Protocol()
 
-    val outputPing = protocol.write(RespArray(List(RespBulkString("PING"))))
+    ClusterNode.setManagerPort(managerPort)
+    ClusterNode.setManagerHost(managerHost)
+    ClusterNode.setManagerSocket()
+    ClusterNode.setManagerInputStream()
+    ClusterNode.setManagerOutputStream()
+    ClusterNode.register(protocol, config.portNumber)
+    setRole("node")
+    config.replicaOf = ""
 
-    masterOutputStream.write(outputPing)
-    masterOutputStream.flush()
-
-    val pingResponse = protocol.read(masterInputReader)
-    if (pingResponse(0) == "PONG") {
-
-      var replConf = protocol.write(
-        RespArray(
-          List(
-            RespBulkString("REPLCONF"),
-            RespBulkString("listening-port"),
-            RespBulkString(config.portNumber)
-          )
-        )
-      )
-
-      masterOutputStream.write(replConf)
-      masterOutputStream.flush()
-
-      replConf = protocol.write(
-        RespArray(
-          List(
-            RespBulkString("REPLCONF"),
-            RespBulkString("capa"),
-            RespBulkString("psync2")
-          )
-        )
-      )
-
-      masterOutputStream.write(replConf)
-      masterOutputStream.flush()
-
-      val replConfResponse = protocol.read(masterInputReader)
-
-      if (replConfResponse(0) != "") {
-
-        val psyncArr = protocol.write(
-          RespArray(
-            List(
-              RespBulkString("PSYNC"),
-              RespBulkString("?"),
-              RespBulkString("-1")
-            )
-          )
-        )
-
-        masterOutputStream.write(psyncArr)
-        masterOutputStream.flush()
-      }
-
-    } else {
-      throw new RuntimeException("Handshake with master failed!")
+    ClusterNode.managerSocket match {
+      case Some(socket) => socket
+      case None => throw new RuntimeException("Manager socket is not defined, cannot register as node")
     }
-    println(s"Handshake successful!")
-  }
-
-  def sendSnapshot(protocol: Protocol, outputStream: OutputStream): Unit = {
-
-    val b64EncodedCacheSnapshot =
-      "UkVESVMwMDEx+glyZWRpcy12ZXIFNy4yLjD6CnJlZGlzLWJpdHPAQPoFY3RpbWXCbQi8ZfoIdXNlZC1tZW3CsMQQAPoIYW9mLWJhc2XAAP/wbjv+wP9aog=="
-
-    val cacheSnapshot = RespSnapshot(Base64.getDecoder().decode(b64EncodedCacheSnapshot))
-
-    val encodedSnapshotLength = protocol.write(cacheSnapshot)
-
-    outputStream.write(encodedSnapshotLength)
-    outputStream.write(cacheSnapshot.value)
-    outputStream.flush()
-
   }
 
   def main(args: Array[String]): Unit = {
@@ -229,14 +205,13 @@ object Server {
       }
     }
 
-    if (config.replicaOf != "") {
-      handshakeWithMaster(config)
-    }
-
     val threadPool = Executors.newFixedThreadPool(8)
 
     while (true) {
-      val clientSocket = serverSocket.accept()
+      val clientSocket = config.replicaOf match {
+        case "" => serverSocket.accept()
+        case _: String => configureClusterNode(config)
+      }
       println("New client connected!")
       threadPool.execute(new RequestThread(clientSocket, storage, config))
     }
