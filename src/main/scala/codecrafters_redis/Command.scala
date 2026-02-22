@@ -118,14 +118,14 @@ class Command {
 
     subCommand match {
       case "REPLICATION" =>
-        if (config.replicaOf.isEmpty()) RespBulkString(masterString)
-        else RespBulkString("role:slave")
+        if (Server.getRole() == "node") RespBulkString("role:slave")
+        else RespBulkString(masterString)
     }
   }
 
   def replConfCommand(input: List[String], config: Config, clientSocket: Socket): RespReply = {
     Server.configureClusterManager(clientSocket)
-    
+
     RespSimpleString("OK")
   }
 
@@ -133,7 +133,13 @@ class Command {
     RespSimpleString(s"FULLRESYNC ${Server.getReplID()} 0")
   }
 
-  def execute(input: List[String], storage: DataStorage, config: Config, protocol: Protocol, clientSocket: Socket): RespReply = {
+  def execute(
+      input: List[String],
+      storage: DataStorage,
+      config: Config,
+      protocol: Protocol,
+      clientSocket: Socket
+  ): RespReply = {
     if (input.isEmpty) throw new Exception("No command received")
 
     val command =
@@ -141,17 +147,17 @@ class Command {
     val commandInput = input.slice(1, input.length)
 
     command match {
-      case "COMMAND"  => commandCommand()
-      case "PING"     => pingCommand()
-      case "ECHO"     => echoCommand(commandInput)
-      case "SET"      => setCommand(commandInput, storage)
-      case "GET"      => getCommand(commandInput, storage)
-      case "KEYS"     => keysCommand(commandInput, storage)
-      case "CONFIG"   => configCommand(commandInput, config)
-      case "INFO"     => infoCommand(commandInput, config)
-      case "REPLCONF" => replConfCommand(commandInput, config, clientSocket)
-      case "PSYNC"    => psyncCommand(commandInput, config, protocol)
-      case other      => throw new Exception(s"Command $other not recognised.")
+      case "COMMAND"    => commandCommand()
+      case "PING"       => pingCommand()
+      case "ECHO"       => echoCommand(commandInput)
+      case "SET"        => setCommand(commandInput, storage)
+      case "GET"        => getCommand(commandInput, storage)
+      case "KEYS"       => keysCommand(commandInput, storage)
+      case "CONFIG"     => configCommand(commandInput, config)
+      case "INFO"       => infoCommand(commandInput, config)
+      case "REPLCONF"   => replConfCommand(commandInput, config, clientSocket)
+      case "PSYNC"      => psyncCommand(commandInput, config, protocol)
+      case other        => throw new UnsupportedOperationException(s"Command $other not recognised.")
     }
   }
 }

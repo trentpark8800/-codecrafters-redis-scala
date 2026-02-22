@@ -31,14 +31,21 @@ case class Config(
 
 class RequestThread(clientSocket: Socket, storage: DataStorage, config: Config) extends Thread {
 
-  def execute(input: List[String], command: Command, storage: DataStorage, config: Config, protocol: Protocol, clientSocket: Socket): Option[RespReply] = {
+  def execute(
+      input: List[String],
+      command: Command,
+      storage: DataStorage,
+      config: Config,
+      protocol: Protocol,
+      clientSocket: Socket
+  ): Option[RespReply] = {
     val writeCommands = List[String]("SET", "DEL")
 
     if (Server.getRole() == "manager" & writeCommands.contains(input(0).toUpperCase())) {
       ClusterManager.routeCommandToNode(input, protocol)
+      writeToStream(RespSimpleString("OK"), protocol, clientSocket.getOutputStream)
       None
-    }
-    else {
+    } else {
       Some(command.execute(input, storage, config, protocol, clientSocket))
     }
   }
@@ -61,16 +68,25 @@ class RequestThread(clientSocket: Socket, storage: DataStorage, config: Config) 
 
       while (true) {
 
-        val input = protocol.read(inputReader)
-        val result = execute(input, command, storage, config, protocol, clientSocket)
-        // val result = command.execute(input, storage, config, protocol, clientSocket)
-        result match {
-          case Some(value) => writeToStream(value, protocol, outputStream)
-          case None => println("Forwarded command to node(s)")
-        }
+        try {
+          val input = protocol.read(inputReader)
+          val result = execute(input, command, storage, config, protocol, clientSocket)
+          // val result = command.execute(input, storage, config, protocol, clientSocket)
+          result match {
+            case Some(value) => writeToStream(value, protocol, outputStream)
+            case None        => println("Forwarded command to node(s)")
+          }
 
-        if (input(0).toUpperCase() == "PSYNC") {
-          ClusterManager.sendSnapshot(protocol)
+          if (input(0).toUpperCase() == "PSYNC") {
+            ClusterManager.sendSnapshot(protocol)
+          }
+        } catch {
+          case e: UnsupportedOperationException =>
+            println(s"Unrecognized command: $e")
+          case e: RuntimeException =>
+            println("Client disconnected, closing thread")
+            clientSocket.close()
+            return
         }
       }
     } catch {
@@ -107,7 +123,7 @@ object Server {
     this.role = role
   }
 
-  def getRole(): String ={
+  def getRole(): String = {
     this.role
   }
 
@@ -137,7 +153,8 @@ object Server {
 
     ClusterNode.managerSocket match {
       case Some(socket) => socket
-      case None => throw new RuntimeException("Manager socket is not defined, cannot register as node")
+      case None         =>
+        throw new RuntimeException("Manager socket is not defined, cannot register as node")
     }
   }
 
@@ -209,7 +226,7 @@ object Server {
 
     while (true) {
       val clientSocket = config.replicaOf match {
-        case "" => serverSocket.accept()
+        case ""        => serverSocket.accept()
         case _: String => configureClusterNode(config)
       }
       println("New client connected!")

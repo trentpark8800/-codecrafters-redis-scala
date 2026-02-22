@@ -84,6 +84,7 @@ object ClusterNode {
       )
 
       writeToManager(replConf)
+      readFromManager(protocol) //I don't care about this response
 
       replConf = protocol.write(
         RespArray(
@@ -112,6 +113,7 @@ object ClusterNode {
         )
 
         writeToManager(psyncArr)
+        readFromManager(protocol)
       }
 
     } else {

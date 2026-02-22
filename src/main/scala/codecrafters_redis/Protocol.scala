@@ -7,16 +7,21 @@ class Protocol {
   val DOLLAR_BYTE = '$'
   val ASTERISK_BYTE = '*'
   val PLUS_BYTE = '+'
+  val NEGATIVE_ONE = "-1"
 
   def read(reader: BufferedReader): List[String] = {
-    val firstChar = reader.read().toChar
+    val firstCharInt = reader.read()
+    if (firstCharInt == -1) {
+        throw new RuntimeException("Connection closed by remote host")
+    }
+    val firstChar = firstCharInt.toChar
     firstChar match {
       case `ASTERISK_BYTE` => parseMultiBulkReply(reader)
       case `DOLLAR_BYTE`   => List(parseBulkReply(reader))
       case `PLUS_BYTE`     => List(parseSimpleString(reader))
-      case _               => throw new Exception(s"Unknown input: $firstChar")
+      case _               => throw new UnsupportedOperationException(s"Unknown input: $firstChar")
     }
-  }
+}
 
   private def parseMultiBulkReply(reader: BufferedReader): List[String] = {
     val countLine = reader.readLine()
@@ -87,6 +92,6 @@ class Protocol {
   def write(reply: RespReply): Array[Byte] = {
 
     val stringReply = encode(reply)
-    stringReply.getBytes("UTF-8")
+    stringReply.getBytes("ASCII")
   }
 }
